@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add New Cars to Inventory</title>
+    <script>
+      async function fetchUsers() {
+        const response = await fetch("/users");
+        const users = await response.json();
+        const usersList = document.getElementById("usersList");
+        usersList.innerHTML = ""; // Clear previous entries
+
+        users.forEach((user) => {
+          const li = document.createElement("li");
+          li.textContent = `${user.name} (${user.email}) `; // User details
+
+          // Ensure we're logging the full user object to debug
+          console.log("Fetched user:", user); // Log the user object
+
+          // Create delete button
+          const deleteButton = document.createElement("button");
+          deleteButton.textContent = "Delete";
+          deleteButton.onclick = async () => {
+            const confirmDelete = confirm(
+              `Are you sure you want to delete ${user.name}?`
+            );
+            if (confirmDelete) {
+              console.log("Attempting to delete user with ID:", user.id); // Log user ID
+              await deleteUser(user.id); // Call delete function
+              fetchUsers(); // Refresh the user list after deletion
+            }
+          };
+          li.appendChild(deleteButton); // Append button to list item
+          usersList.appendChild(li); // Append list item to user list
+        });
+      }
+
+      async function deleteUser(userId) {
+        // Delete the user
+        const response = await fetch(`/users/${userId}`, {
+          method: "DELETE",
+        });
+
+        // Check if deletion was successful
+        if (response.ok) {
+          console.log(`User with ID ${userId} deleted successfully.`); // Log success
+        } else {
+          console.error(`Failed to delete user with ID ${userId}.`); // Log error
+        }
+      }
+
+      async function addUser(event) {
+        event.preventDefault(); // Prevent form submission
+
+        const name = document.getElementById("name").value;
+        const model = document.getElementById("model").value; // Fetch model
+
+        const response = await fetch("/users", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name, email: model }), // Send as email
+        });
+
+        if (response.ok) {
+          // Reset form and fetch updated user list
+          document.getElementById("userForm").reset();
+          fetchUsers();
+        } else {
+          alert("Failed to add user."); // Simple alert for adding user failure
+        }
+      }
+
+      window.onload = () => {
+        fetchUsers(); // Fetch users when the page loads
+      };
+    </script>
+  </head>
+  <body>
+    <h1>Inventory Management</h1>
+
+    <form id="userForm" onsubmit="addUser(event)">
+      <input type="text" id="name" placeholder="Brand" required />
+      <input type="text" id="model" placeholder="Model" required />
+      <button type="submit">Add User</button>
+    </form>
+
+    <h2>On Stock Cars List</h2>
+    <ul id="usersList"></ul>
+  </body>
+</html>
